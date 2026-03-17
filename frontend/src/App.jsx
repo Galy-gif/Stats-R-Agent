@@ -1,9 +1,5 @@
-function App() {
-  return (
-    <div>
-      <h1>Stats-R-Agent</h1>
-    </div>
-  )
-}
+import ChatWindow from './components/ChatWindow'
 
-export default App
+export default function App() {
+  return <ChatWindow />
+}
