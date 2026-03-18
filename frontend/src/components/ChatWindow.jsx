@@ -12,10 +12,16 @@ function Message({ role, content }) {
   )
 }
 
+const WELCOME = '你好！我是 Stats-R-Agent，一位严谨的统计学与 R 语言助教。\n\n' +
+  '当你提出统计分析需求时，我会先确认数据是否满足前提假设条件，再为你生成完整的 R 代码。\n\n' +
+  '请输入你的问题 👇'
+
 export default function ChatWindow() {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: '你好！我是 Stats-R-Agent，可以回答统计学原理和 R 语言相关问题。请输入你的问题 👇' },
+    { role: 'assistant', content: WELCOME },
   ])
+  // history 只存用户和 assistant 的实际对话（不含欢迎语），传给后端
+  const [history, setHistory] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef(null)
@@ -29,13 +35,17 @@ export default function ChatWindow() {
     const question = input.trim()
     if (!question || loading) return
 
-    setMessages(prev => [...prev, { role: 'user', content: question }])
+    const newUserMsg = { role: 'user', content: question }
+    setMessages(prev => [...prev, newUserMsg])
     setInput('')
     setLoading(true)
 
     try {
-      const answer = await sendQuestion(question)
-      setMessages(prev => [...prev, { role: 'assistant', content: answer }])
+      const answer = await sendQuestion(question, history)
+      const newAssistantMsg = { role: 'assistant', content: answer }
+      setMessages(prev => [...prev, newAssistantMsg])
+      // 将本轮对话追加到历史
+      setHistory(prev => [...prev, newUserMsg, newAssistantMsg])
     } catch (err) {
       const detail = err.response?.data?.detail || err.message || '请求失败'
       setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ 错误：${detail}` }])
@@ -54,7 +64,7 @@ export default function ChatWindow() {
     <div className="chat-window">
       <header className="chat-header">
         <h1>Stats-R-Agent</h1>
-        <span className="subtitle">统计学 · R 语言 · RAG 问答</span>
+        <span className="subtitle">统计学 · R 语言 · 护栏问答</span>
       </header>
 
       <div className="message-list">
